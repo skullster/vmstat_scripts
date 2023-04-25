@@ -1,0 +1,45 @@
+#!/bin/bash
+
+###################################################################
+#
+# Script that waits then kicks off the analysis in the background.
+# No arguments checking here - all done in calling script
+#
+###################################################################
+# Make the args explicit
+wait_time=$1
+running_time_secs=$2
+sample_interval=$3
+sample_number=$4
+
+# Now the nohup stuff ....
+TIMEOUT=0.1
+#Use nohup to run the command.
+#Nohup is run in the background.
+
+###################################################################
+#
+# Sleep in the background
+#
+###################################################################
+sleep ${wait_time}s
+
+nohup ./vmstat_analysis.sh $running_time_secs $sample_interval $sample_number &
+
+#Get last background PID ie nohup
+NOHUP_PID=$!
+
+# Echo the background PID so it can be waited on
+echo $NOHUP_PID
+
+#Kill this script after a short time
+#Get current PID
+MY_PID=$$
+trap "exit 0" SIGINT SIGTERM
+sleep $TIMEOUT && kill $MY_PID 2>/dev/null &
+#If the command finishes before the timeout .... (not sure about the next bit)
+wait $NOHUP_PID
+NOHUP_STATUS=$?
+#Print an error
+[ $NOHUP_STATUS != 0 ] && echo "Errors ...."
+exit $NOHUP_STATUS

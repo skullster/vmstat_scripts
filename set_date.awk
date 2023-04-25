@@ -1,0 +1,1 @@
+{printf("%s %s %s %s %s %s %s %s %s %s %s\n",strftime("%F/%T",$1+start_epoch),$2,strftime("%T",$3+start_epoch),$4,strftime("%T",$5+start_epoch),$6,$7,strftime("%F",$8+start_epoch),$9,$10,$11)}

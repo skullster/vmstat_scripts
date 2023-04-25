@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Make the args explicit
+start_epoch=$1
+running_time_secs=$2
+sample_interval=$3
+sample_number=$4
+mem_total=$5
+
+# Get the total available RAM
+#mem_total=$(cat /proc/meminfo | grep MemTotal | awk '{print $2}')
+
+# Now the nohup stuff ....
+TIMEOUT=0.1
+#Use nohup to run the command.
+#Nohup's output goes to free_mem_<epoch time>
+#Nohup is run in the background.
+
+nohup ./vmstat_free_mem_analysis.sh $1 $2 $3 $4 $5 &
+#nohup vmstat -n -t $sample_interval $sample_number | awk '{if (FNR > 2) {printf("%s %s %s\n", $18, $19, $4)}}' | ./get_rel_epoch_pc_mem.sh $start_epoch $mem_total | awk -v time_frmt=${#running_time_secs} -f least_squares.awk -- >> free_mem_$start_epoch &
+
+#Get last background PID ie nohup
+NOHUP_PID=$!
+
+# Echo the background PID so it can be waited on
+echo $NOHUP_PID
+
+#Kill this script after a short time
+#Get current PID
+MY_PID=$$
+trap "exit 0" SIGINT SIGTERM
+sleep $TIMEOUT && kill $MY_PID 2>/dev/null &
+#If the command finishes before the timeout .... (not sure about the next bit)
+wait $NOHUP_PID
+NOHUP_STATUS=$?
+#Print an error
+[ $NOHUP_STATUS != 0 ] && echo "Errors ...."
+exit $NOHUP_STATUS
